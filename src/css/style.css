@@ -1,16 +1,31 @@
+* {
+  padding: 0;
+  box-sizing: border-box;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+header {
+  background-color: #212121;
+  width: 100vw;
+  padding: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: white;
+  font-size: 20px;
+}
+
 canvas {
   -moz-user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
-  width: 1000px !important;
-  height: 600px !important;
 }
 #content {
+  padding-top: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100vw;
-  height: 100vh;
+  min-height: 100%;
   flex-direction: column;
 }
 #info {
@@ -30,4 +45,8 @@ canvas {
 }
 .flex button {
   margin-left: 15px;
+}
+
+#logs {
+  text-align: center;
 }

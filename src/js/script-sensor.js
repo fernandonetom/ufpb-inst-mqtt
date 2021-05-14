@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
   const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
   client.on('connect', () => {

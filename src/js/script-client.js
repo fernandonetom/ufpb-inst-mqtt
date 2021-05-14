@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
   const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
   client.subscribe('mqtt/ufpb-inst-test');
 
@@ -27,10 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
       datasets: [
         {
           label: 'Temperatura',
-          backgroundColor: '#42a5f5',
-          borderColor: '#42a5f5',
+          backgroundColor: '#01579b',
+          borderColor: '#01579b',
           data: [],
           fill: false,
+          tension: 0.5,
         },
       ],
     },
