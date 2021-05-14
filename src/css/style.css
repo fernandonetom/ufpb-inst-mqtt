@@ -3,6 +3,9 @@ canvas {
   -webkit-user-select: none;
   -ms-user-select: none;
 }
+.canvasContainer {
+  width: 70%;
+}
 #content {
   display: flex;
   align-items: center;

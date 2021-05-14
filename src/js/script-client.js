@@ -86,14 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
   );
   function infoShow(text) {
     const info = document.getElementById('info');
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('canvasContainer');
     info.innerHTML = text;
     info.style.display = 'flex';
     canvas.style.display = 'none';
   }
   function infoHide() {
     const info = document.getElementById('info');
-    const canvas = document.getElementById('canvas');
+    const canvas = document.getElementById('canvasContainer');
     info.style.display = 'none';
     canvas.style.display = 'block';
   }
