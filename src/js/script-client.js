@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const client = mqtt.connect('ws://broker.mqttdashboard.com:8000/mqtt');
+  const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
   client.subscribe('mqtt/ufpb-inst-test');
 
   client.on('message', function (topic, payload) {
