@@ -1,25 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
   // const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
   const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-  client.subscribe('mqtt/ufpb-inst-test');
+  const data = [];
+
+  const tempTopic = 'mqtt/ufpb-inst/temp';
+  const controlTopic = 'mqtt/ufpb-inst/t';
+
+  client.subscribe(tempTopic);
+  client.subscribe(controlTopic);
 
   client.on('message', function (topic, payload) {
     try {
+      console.log(payload.toString());
       const number = parseFloat(payload.toString());
-      updateChart(number);
+      if (!isNaN(number)) updateChart(number);
     } catch (e) {
       console.log(e.message);
     }
   });
   client.on('connect', () => {
     setTimeout(infoHide, 1000);
+    toastr.success('Conectado!');
   });
-  // setInterval(() => {
-  //   client.publish(
-  //     'mqtt/ufpb-inst-test',
-  //     (Math.floor(Math.random() * 6) + 1).toString()
-  //   );
-  // }, 2000);
 
   let config = {
     type: 'line',
@@ -28,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
       datasets: [
         {
           label: 'Temperatura',
-          backgroundColor: '#01579b',
-          borderColor: '#01579b',
+          backgroundColor: '#4ECCA3',
+          borderColor: '#4ECCA3',
           data: [],
           fill: false,
           tension: 0.5,
@@ -38,20 +40,40 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     options: {
       responsive: true,
-      title: {
-        display: true,
-        text: 'Chart.js Line Chart',
+      plugins: {
+        legend: {
+          display: false,
+        },
       },
       scales: {
         y: {
+          title: {
+            display: true,
+            text: 'Temperatura',
+            color: '#EEEEEE',
+          },
           suggestedMin: 0,
           suggestedMax: 50,
+          ticks: {
+            color: '#EEEEEE',
+          },
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Tempo',
+            color: '#EEEEEE',
+          },
+          ticks: {
+            color: '#EEEEEE',
+          },
         },
       },
       interaction: {
         mode: 'nearest',
         intersect: false,
       },
+      color: '#EEEEEE',
     },
   };
 
@@ -75,7 +97,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const copyData = dataset.data.slice((limit - 1) * -1);
         copyData.push(number);
 
-        logs.innerHTML += `${hours} - Recebeu ${number} ºC<br />`;
+        data.unshift({ hours, number });
+
+        logs.innerHTML = '';
+        data.forEach((item) => {
+          logs.innerHTML += `<div class="log">
+          <div class="logHora">${item.hours}</div>
+          <div class="separador"></div>
+          <div class="logDado">${item.number}ºC</div>
+          </div>`;
+        });
 
         dataset.data = copyData;
       });
@@ -86,17 +117,49 @@ document.addEventListener('DOMContentLoaded', () => {
   infoShow(
     '<h3>Conectando </h3><img width="100px" src="https://media3.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" />'
   );
-  function infoShow(text) {
-    const info = document.getElementById('info');
-    const canvas = document.getElementById('canvasContainer');
-    info.innerHTML = text;
-    info.style.display = 'flex';
-    canvas.style.display = 'none';
+  function infoShow() {
+    const info = document.getElementById('statusInfo');
+    info.innerHTML = `
+    <div class="loading">
+        <div class="lds-facebook">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+      <div class="status">Conectando...</div>
+    `;
   }
   function infoHide() {
-    const info = document.getElementById('info');
-    const canvas = document.getElementById('canvasContainer');
-    info.style.display = 'none';
-    canvas.style.display = 'block';
+    const info = document.getElementById('statusInfo');
+    info.innerHTML =
+      '<div class="status"><i class="fa fa-check"></i> Conectado</div>';
+    info.style.color = 'var(--green-light)';
   }
+
+  const saveButton = document.getElementById('save');
+  saveButton.addEventListener('click', () => {
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      data.map((e) => `${e.hours};${e.number}`).join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'dados.csv');
+    document.body.appendChild(link);
+    link.click();
+    toastr.info('Arquivo .csv gerado!', 'Sucesso!');
+  });
+
+  const startButton = document.getElementById('start');
+  startButton.addEventListener('click', () => {
+    try {
+      client.publish(controlTopic, 'start');
+      //startButton.innerText = '...';
+      //startButton.setAttribute('disabled', 'disabled');
+    } catch (error) {
+      console.log('erro ao começar');
+    }
+  });
 });

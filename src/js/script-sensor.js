@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   client.on('connect', () => {
     setTimeout(infoHide, 1000);
+    setInterval(send, 2000);
   });
   infoShow(
     '<h3>Conectando </h3><img width="100px" src="https://media3.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" />'
@@ -40,4 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
       logs.innerHTML += `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} - Enviou ${value} ºC <br />`;
     } catch (error) {}
   });
+
+  function send() {
+    const number = Math.floor(Math.random() * 40 + 25);
+    client.publish('mqtt/ufpb-inst-test', number.toString());
+  }
 });
