@@ -4,23 +4,51 @@ document.addEventListener('DOMContentLoaded', () => {
   const data = [];
 
   const tempTopic = 'mqtt/ufpb-inst/temp';
-  const controlTopic = 'mqtt/ufpb-inst/t';
-
-  client.subscribe(tempTopic);
-  client.subscribe(controlTopic);
-
+  const controlTopic = 'mqtt/ufpb-inst/control';
+  const startButton = document.getElementById('start');
+  let start = false;
+  let intervalo;
   client.on('message', function (topic, payload) {
-    try {
-      console.log(payload.toString());
-      const number = parseFloat(payload.toString());
-      if (!isNaN(number)) updateChart(number);
-    } catch (e) {
-      console.log(e.message);
+    console.log(payload.toString());
+    console.log(topic.toString());
+    switch (topic) {
+      case 'mqtt/ufpb-inst/temp':
+        try {
+          console.log(payload.toString());
+          const number = parseFloat(payload.toString());
+          if (!isNaN(number)) updateChart(number);
+        } catch (e) {
+          console.log(e.message);
+        }
+        break;
+      case 'mqtt/ufpb-inst/control':
+        console.log(payload.toString());
+        const message = payload.toString();
+        if (message === 'start') {
+          start = true;
+          startButton.innerText = 'parar';
+          // intervalo = setInterval(async () => {
+          //   const { data } = await axios.get('/cgi-bin/entrada-analogica');
+
+          //   const valor = data.replace(/\D/g, '');
+          //   console.log('enviou', valor);
+
+          //   client.publish(tempTopic, valor.toString());
+          // }, 2000);
+        } else {
+          start = false;
+          startButton.innerText = 'iniciar';
+          clearInterval(intervalo);
+        }
+      default:
+        break;
     }
   });
   client.on('connect', () => {
     setTimeout(infoHide, 1000);
     toastr.success('Conectado!');
+    client.subscribe(tempTopic);
+    client.subscribe(controlTopic);
   });
 
   let config = {
@@ -84,8 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const limit = 10;
 
-  const updateChart = (number) => {
+  const updateChart = (value) => {
     if (config.data.datasets.length > 0) {
+      const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
+
       const date = new Date();
       const hours = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
       const copyData = config.data.labels.slice((limit - 1) * -1);
@@ -152,14 +182,33 @@ document.addEventListener('DOMContentLoaded', () => {
     toastr.info('Arquivo .csv gerado!', 'Sucesso!');
   });
 
-  const startButton = document.getElementById('start');
   startButton.addEventListener('click', () => {
     try {
-      client.publish(controlTopic, 'start');
+      //client.publish(controlTopic, 'start');
       //startButton.innerText = '...';
       //startButton.setAttribute('disabled', 'disabled');
+      if (start) {
+        // clearInterval(intervalo);
+        startButton.innerText = 'iniciar';
+        client.publish(controlTopic, 'stop');
+      } else {
+        startButton.innerText = 'parar';
+        // intervalo = setInterval(async () => {
+        //   const { data } = await axios.get('/cgi-bin/entrada-analogica');
+
+        //   const valor = (
+        //     (parseFloat(data.replace(/\D/g, '')) * 100) /
+        //     4095
+        //   ).toFixed(2);
+        //   console.log('enviou', valor);
+
+        //   client.publish(tempTopic, valor.toString());
+        // }, 2000);
+        client.publish(controlTopic, 'start');
+      }
+      start = !start;
     } catch (error) {
-      console.log('erro ao começar');
+      console.log('erro ao comeÃ§ar');
     }
   });
 });

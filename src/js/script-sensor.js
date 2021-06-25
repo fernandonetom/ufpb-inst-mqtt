@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
   const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-
+  const topic = 'mqtt/ufpb-inst/temp';
   client.on('connect', () => {
     setTimeout(infoHide, 1000);
     setInterval(send, 2000);
@@ -23,27 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
     info.style.display = 'none';
     content.style.display = 'flex';
   }
-
-  const tempInput = document.getElementById('temp');
   const valueLabel = document.getElementById('value');
-  const button = document.querySelector('button');
-  const logs = document.getElementById('logs');
-  let value = tempInput.value;
 
-  tempInput.addEventListener('change', (e) => {
-    value = e.target.value;
-    valueLabel.innerHTML = `${value} ºC`;
-  });
-  button.addEventListener('click', () => {
+  const lerBtn = document.getElementById('ler-temp');
+
+  lerBtn.addEventListener('click', async () => {
     try {
-      client.publish('mqtt/ufpb-inst-test', value.toString());
-      const date = new Date();
-      logs.innerHTML += `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} - Enviou ${value} ºC <br />`;
-    } catch (error) {}
-  });
+      const { data } = await axios.get('/cgi-bin/entrada-analogica');
 
-  function send() {
-    const number = Math.floor(Math.random() * 40 + 25);
-    client.publish('mqtt/ufpb-inst-test', number.toString());
-  }
+      const valor = data.replace(/\D/g, '');
+      console.log('enviou', valor);
+      valueLabel.innerHTML = valor;
+
+      client.publish(topic, valor.toString());
+    } catch (error) {
+      console.log(error.message);
+    }
+  });
 });
