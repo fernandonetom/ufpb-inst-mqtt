@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import Mqtt from 'mqtt';
-import { FaTrashAlt } from 'react-icons/fa';
+import {
+  FaTrashAlt, FaCheck, FaTimes, FaUnlink, FaRegPaperPlane,
+} from 'react-icons/fa';
+import ReactTooltip from 'react-tooltip';
+
 import addNotify from '../../Components/Notify';
 
 export default function Home() {
@@ -16,7 +20,7 @@ export default function Home() {
     });
     mqttClient.on('disconnect', () => setStatus('desconectado'));
     mqttClient.on('reconnect', () => setStatus('reconectando'));
-    mqttClient.on('error', () => setStatus('erro de conexão'));
+    mqttClient.on('error', () => setStatus('erro'));
   }, []);
 
   function handleStart() {}
@@ -82,30 +86,63 @@ export default function Home() {
           />
         </div>
         <div className="infoContainer">
-          <h3>
-            dados recebidos
-            {' '}
-            <FaTrashAlt />
-          </h3>
-          <div id="logs" />
           <div className="status">
-            Status:
-            {' '}
-            {status}
+            <p>Estado da conexão</p>
+            <div className="statusName">
+              {status === 'conectado' && (
+                <>
+                  <FaCheck />
+                  <span>{status}</span>
+                </>
+              )}
+              {status === 'desconectado' && (
+                <>
+                  <FaUnlink />
+                  <span>{status}</span>
+                </>
+              )}
+              {status === 'erro' && (
+                <>
+                  <FaTimes />
+                  <span>{status}</span>
+                </>
+              )}
+              {status === 'reconectando' && (
+                <>
+                  <FaRegPaperPlane />
+                  {status}
+                </>
+              )}
+            </div>
           </div>
-          <div className="acoes">
-            <button
-              type="button"
-              id="start"
-              onClick={status === 'conectado' && handleStart}
-            >
-              iniciar
 
-            </button>
-            <button type="button" id="save" onClick={handleExport}>salvar</button>
+          <div className="infoContent">
+            <h3>
+              dados recebidos
+              {' '}
+              <button type="button" className="clear" data-tip="Limpar todos os dados recebidos">
+                <FaTrashAlt />
+              </button>
+            </h3>
+            <div id="logs" />
+
+            <div className="acoes">
+              <button
+                type="button"
+                id="start"
+                onClick={status === 'conectado' && handleStart}
+              >
+                iniciar
+
+              </button>
+              <button type="button" id="save" onClick={handleExport}>salvar</button>
+            </div>
           </div>
+
         </div>
+        <div className="controller"><h3>Dados do controlador</h3></div>
       </section>
+      <ReactTooltip type="light" />
     </>
   );
 }
