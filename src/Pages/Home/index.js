@@ -4,19 +4,24 @@ import Mqtt from 'mqtt';
 import addNotify from '../../Components/Notify';
 
 export default function Home() {
-  const [status, setStatus] = useState('off');
+  const [status, setStatus] = useState('desconectado');
 
   useEffect(() => {
     const mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
     mqttClient.on('connect', () => {
-      setStatus('on');
+      setStatus('conectado');
       addNotify({ title: 'Sucesso', message: 'MQTT conectado', type: 'success' });
     });
-    mqttClient.on('disconnect', () => setStatus('off'));
-    mqttClient.on('reconnect', () => setStatus('reconnect'));
-    mqttClient.on('error', () => setStatus('error'));
+    mqttClient.on('disconnect', () => setStatus('desconectado'));
+    mqttClient.on('reconnect', () => setStatus('reconectando'));
+    mqttClient.on('error', () => setStatus('erro de conexão'));
   }, []);
+
+  function handleStart() {}
+
+  function handleExport() {}
+
   return (
     <>
       <section className="container" id="canvasContainer">
@@ -78,13 +83,23 @@ export default function Home() {
         <div className="infoContainer">
           <h3>
             dados recebidos
-            {' '}
-            {status}
           </h3>
           <div id="logs" />
+          <div className="status">
+            Status:
+            {' '}
+            {status}
+          </div>
           <div className="acoes">
-            <button type="button" id="start">iniciar</button>
-            <button type="button" id="save">salvar</button>
+            <button
+              type="button"
+              id="start"
+              onClick={handleStart}
+            >
+              iniciar
+
+            </button>
+            <button type="button" id="save" onClick={handleExport}>salvar</button>
           </div>
         </div>
       </section>
