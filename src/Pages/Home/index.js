@@ -1,7 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
+import Mqtt from 'mqtt';
+import addNotify from '../../Components/Notify';
 
 export default function Home() {
+  const [status, setStatus] = useState('off');
+
+  useEffect(() => {
+    const mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+
+    mqttClient.on('connect', () => {
+      setStatus('on');
+      addNotify({ title: 'Sucesso', message: 'MQTT conectado', type: 'success' });
+    });
+    mqttClient.on('disconnect', () => setStatus('off'));
+    mqttClient.on('reconnect', () => setStatus('reconnect'));
+    mqttClient.on('error', () => setStatus('error'));
+  }, []);
   return (
     <>
       <section className="container" id="canvasContainer">
@@ -61,7 +76,11 @@ export default function Home() {
           />
         </div>
         <div className="infoContainer">
-          <h3>dados recebidos</h3>
+          <h3>
+            dados recebidos
+            {' '}
+            {status}
+          </h3>
           <div id="logs" />
           <div className="acoes">
             <button type="button" id="start">iniciar</button>
