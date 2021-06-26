@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import Mqtt from 'mqtt';
+import { FaTrashAlt } from 'react-icons/fa';
 import addNotify from '../../Components/Notify';
 
 export default function Home() {
@@ -83,6 +84,8 @@ export default function Home() {
         <div className="infoContainer">
           <h3>
             dados recebidos
+            {' '}
+            <FaTrashAlt />
           </h3>
           <div id="logs" />
           <div className="status">
@@ -94,7 +97,7 @@ export default function Home() {
             <button
               type="button"
               id="start"
-              onClick={handleStart}
+              onClick={status === 'conectado' && handleStart}
             >
               iniciar
 
