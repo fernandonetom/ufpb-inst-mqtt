@@ -321,3 +321,18 @@ header {
     height: 32px;
   }
 }
+
+@media screen and (max-width: 1250px) {
+  .container {
+    display: flex;
+    flex-direction: column;
+  }
+  .controller form {
+    display: flex;
+    flex-direction: column;
+  }
+  .controller form input,
+  .save {
+    margin-bottom: 15px;
+  }
+}
