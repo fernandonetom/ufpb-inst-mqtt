@@ -1,31 +1,241 @@
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import Mqtt from 'mqtt';
 import {
-  FaTrashAlt, FaCheck, FaTimes, FaUnlink, FaRegPaperPlane,
+  FaTrashAlt, FaCheck, FaTimes, FaUnlink, FaRegPaperPlane, FaSave, FaUndo,
 } from 'react-icons/fa';
 import ReactTooltip from 'react-tooltip';
 
 import addNotify from '../../Components/Notify';
 
+let mqttClient;
+const tempTopic = 'mqtt/ufpb-inst/temp';
+const controlTopic = 'mqtt/ufpb-inst/control';
+const controllerTopic = 'mqtt/ufpb-inst/controller';
+
 export default function Home() {
   const [status, setStatus] = useState('desconectado');
+  const [isRunning, setIsRunning] = useState(false);
+  const [controller, setController] = useState({
+    kp: '', ti: '', td: '', ref: '',
+  });
+  const [data, setData] = useState([]);
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: 'Temperatura',
+        backgroundColor: '#4ECCA3',
+        borderColor: '#4ECCA3',
+        data: [],
+        fill: false,
+        tension: 0.5,
+      },
+    ],
+  });
+
+  function updateChart(value) {
+    const limit = 10;
+    if (chartData.datasets.length > 0) {
+      const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
+
+      const date = new Date();
+      const hours = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+
+      const newData = { ...chartData };
+
+      const copyData = chartData.labels.slice((limit - 1) * -1);
+      copyData.push(hours);
+
+      newData.labels = [...copyData];
+
+      newData.datasets.forEach((dataset) => {
+        const copy = dataset.data.slice((limit - 1) * -1);
+        copy.push(number);
+
+        setData((prevData) => {
+          const aux = [...prevData];
+          aux.unshift({ hours, number });
+          return aux;
+        });
+        // eslint-disable-next-line no-param-reassign
+        dataset.data = [...copy];
+      });
+
+      setChartData(newData);
+    }
+  }
 
   useEffect(() => {
-    const mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+    mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
 
     mqttClient.on('connect', () => {
       setStatus('conectado');
-      addNotify({ title: 'Sucesso', message: 'MQTT conectado', type: 'success' });
+      try {
+        mqttClient.subscribe(tempTopic);
+        mqttClient.subscribe(controlTopic);
+
+        addNotify({
+          id: '1', title: 'Sucesso', message: 'Os tópicos foram assinados com sucesso.', type: 'success',
+        });
+      } catch (error) {
+        addNotify({ title: 'Erro', message: 'Erro ao tentar assinar os tópicos', type: 'error' });
+      }
+    });
+
+    mqttClient.on('message', (topic, payload) => {
+      const message = payload.toString();
+
+      switch (topic) {
+        case 'mqtt/ufpb-inst/temp':
+          try {
+            const number = parseFloat(message);
+            updateChart(number);
+          } catch (e) {
+            addNotify({ title: 'Erro', message: e.message, type: 'error' });
+          }
+          break;
+        case 'mqtt/ufpb-inst/control':
+          if (message === 'start') {
+            setIsRunning(true);
+          } else {
+            setIsRunning(false);
+          }
+          break;
+        default:
+          break;
+      }
     });
     mqttClient.on('disconnect', () => setStatus('desconectado'));
     mqttClient.on('reconnect', () => setStatus('reconectando'));
     mqttClient.on('error', () => setStatus('erro'));
   }, []);
 
-  function handleStart() {}
+  function getData() {
+    const localData = localStorage.getItem('@ufpb-inst/controller');
+    if (localData) {
+      try {
+        const retrieveData = JSON.parse(localData);
+        setController({
+          kp: retrieveData?.kp || '',
+          ti: retrieveData?.ti || '',
+          td: retrieveData?.td || '',
+          ref: retrieveData?.ref || '',
+        });
+      } catch (error) {
+        addNotify({ title: 'Erro ao localizar dados na memória', message: error.message, type: 'error' });
+      }
+    }
+  }
+  useEffect(() => {
+    getData();
+  }, []);
 
-  function handleExport() {}
+  function handleStart() {
+    mqttClient.publish(controlTopic, isRunning ? 'stop' : 'start');
+    setIsRunning(!isRunning);
+  }
+
+  function handleExport() {
+    try {
+      const csvContent = `data:text/csv;charset=utf-8,${
+        data.reverse().map((e) => `${e.hours};${e.number}`).join('\n')}`;
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', 'dados.csv');
+      document.body.appendChild(link);
+      link.click();
+      addNotify({
+        title: 'Sucesso', message: 'Arquivo dados.csv gerado com sucesso', type: 'info', container: 'bottom-center',
+      });
+    } catch (error) {
+      addNotify({ title: 'Erro ao exportar arquivo', message: error.message, type: 'error' });
+    }
+  }
+
+  function handleInputChange(e) {
+    const { id: name, value } = e.target;
+
+    const copy = { ...controller };
+    copy[name] = value.replace(/\D/g, '').replace(/(\d)(\d{2})$/, '$1.$2');
+    setController(copy);
+  }
+
+  function handleClean() {
+    setController({
+      kp: '', ti: '', td: '', ref: '',
+    });
+    localStorage.setItem('@ufpb-inst/controller', null);
+  }
+
+  function handleResetData() {
+    setData([]);
+    setChartData({
+      labels: [],
+      datasets: [
+        {
+          label: 'Temperatura',
+          backgroundColor: '#4ECCA3',
+          borderColor: '#4ECCA3',
+          data: [],
+          fill: false,
+          tension: 0.5,
+        },
+      ],
+    });
+  }
+
+  function handleSaveData(e) {
+    e.preventDefault();
+
+    const {
+      kp, td, ti, ref,
+    } = controller;
+
+    if (kp === '' || td === '' || ti === '' || ref === '') {
+      return addNotify({
+        title: 'Alguns dados estão em branco',
+        message: 'Verifique os dados do controlador',
+        type: 'warning',
+        container: 'bottom-center',
+        dismiss: {
+          duration: 5000,
+          onScreen: true,
+        },
+      });
+    }
+
+    try {
+      const dataToSend = JSON.stringify({
+        kp, td, ti, ref,
+      });
+
+      mqttClient.publish(controllerTopic, dataToSend);
+
+      localStorage.setItem('@ufpb-inst/controller', dataToSend);
+
+      return addNotify({
+        title: 'Dados aplicados',
+        message: `Kp: ${kp} / Ti: ${ti} / td: ${td} / Ref: ${ref}`,
+        type: 'success',
+        container: 'bottom-center',
+      });
+    } catch (error) {
+      return addNotify({
+        title: 'Erro ao aplicar os dados',
+        message: error.message,
+        type: 'warning',
+        container: 'bottom-center',
+        dismiss: {
+          duration: 5000,
+          onScreen: true,
+        },
+      });
+    }
+  }
 
   return (
     <>
@@ -33,20 +243,9 @@ export default function Home() {
         <div className="canvasContainer">
           <h3>Gráfico</h3>
           <Line
-            data={{
-              labels: ['20:00', '20:05', '20:06'],
-              datasets: [
-                {
-                  label: 'Temperatura',
-                  backgroundColor: '#4ECCA3',
-                  borderColor: '#4ECCA3',
-                  data: [30, 35, 96],
-                  fill: false,
-                  tension: 0.5,
-                },
-              ],
-            }}
+            data={chartData}
             options={{
+              animation: false,
               responsive: true,
               plugins: {
                 legend: {
@@ -120,11 +319,22 @@ export default function Home() {
             <h3>
               dados recebidos
               {' '}
-              <button type="button" className="clear" data-tip="Limpar todos os dados recebidos">
+              <button type="button" onClick={handleResetData} className="clear" data-tip="Limpar todos os dados recebidos">
                 <FaTrashAlt />
               </button>
             </h3>
-            <div id="logs" />
+            <div id="logs">
+              {data.map((log, index) => (
+                <div className="log" key={index}>
+                  <div className="logHora">{log.hours}</div>
+                  <div className="separador" />
+                  <div className="logDado">
+                    {log.number}
+                    ºC
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <div className="acoes">
               <button
@@ -132,15 +342,63 @@ export default function Home() {
                 id="start"
                 onClick={status === 'conectado' && handleStart}
               >
-                iniciar
-
+                {isRunning ? 'parar' : 'iniciar'}
               </button>
               <button type="button" id="save" onClick={handleExport}>salvar</button>
             </div>
           </div>
 
         </div>
-        <div className="controller"><h3>Dados do controlador</h3></div>
+        <div className="controller">
+          <h3>Dados do controlador</h3>
+          <form onSubmit={handleSaveData}>
+            <div className="input-group">
+              <label htmlFor="kp">Kp</label>
+              <input
+                type="text"
+                id="kp"
+                value={controller.kp}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="input-group">
+              <label htmlFor="ti">ti</label>
+              <input
+                type="text"
+                id="ti"
+                value={controller.ti}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="input-group">
+              <label htmlFor="td">td</label>
+              <input
+                type="text"
+                id="td"
+                value={controller.td}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div className="input-group">
+              <label htmlFor="ref">ref</label>
+              <input
+                type="text"
+                id="ref"
+                value={controller.ref}
+                onChange={handleInputChange}
+              />
+            </div>
+            <button type="submit" className="save">
+              <FaSave />
+              Aplicar
+            </button>
+            <button type="button" className="undo" onClick={handleClean}>
+              <FaUndo />
+              {' '}
+              Limpar
+            </button>
+          </form>
+        </div>
       </section>
       <ReactTooltip type="light" />
     </>

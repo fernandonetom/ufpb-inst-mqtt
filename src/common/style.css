@@ -33,9 +33,10 @@ header {
   width: 100%;
   max-width: 1480px;
   grid-template-columns: 2fr 1fr;
-  grid-auto-rows: 1fr 0.4fr;
-  grid-template-areas: "a b"
-                     "c c";
+  grid-auto-rows: 1fr 0.3fr;
+  grid-template-areas:
+    'a b'
+    'c c';
   margin: 0 auto;
   column-gap: 20px;
   row-gap: 20px;
@@ -61,7 +62,7 @@ header {
   row-gap: 20px;
   grid-area: b;
 }
-.infoContainer .status{
+.infoContainer .status {
   background-color: var(--background-block);
   border-radius: 6px;
   padding: 10px 20px 10px 30px;
@@ -69,15 +70,15 @@ header {
   align-items: center;
   justify-content: space-between;
 }
-.infoContainer .status .statusName{
+.infoContainer .status .statusName {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-.infoContainer .status .statusName span{
+.infoContainer .status .statusName span {
   margin-left: 10px;
 }
-.infoContainer .infoContent{
+.infoContainer .infoContent {
   background-color: var(--background-block);
   border-radius: 6px;
   padding: 10px 20px 10px 30px;
@@ -88,6 +89,7 @@ header {
 .infoContainer #logs {
   overflow-x: hidden;
   overflow-y: auto;
+  max-height: 300px;
   padding-right: 10px;
   margin-bottom: 20px;
 }
@@ -168,22 +170,82 @@ header {
   color: var(--background-block);
 }
 
-.controller{
+.controller {
   background-color: var(--background-block);
   border-radius: 6px;
   padding: 10px 30px;
   grid-area: c;
-  
 }
 .controller h3 {
   font-weight: 300;
   text-transform: uppercase;
   font-size: 20px;
 }
-canvas {
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
+.controller form {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-top: 50px;
+}
+
+.controller form .save {
+  background-color: var(--green-light);
+  height: 30px;
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--background-block);
+  border: 0;
+  outline: 0;
+  border-radius: 5px;
+  transition: 0.1s all ease-in-out;
+  cursor: pointer;
+  padding: 5px 25px;
+  display: flex;
+  align-items: center;
+}
+.controller form .save svg {
+  margin-right: 10px;
+}
+.controller form .save:hover {
+  background-color: var(--green-dark);
+  color: var(--light);
+}
+.controller form .undo {
+  background-color: var(--orange-dark);
+  height: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--light);
+  border: 0;
+  outline: 0;
+  border-radius: 5px;
+  transition: 0.2s all ease-in-out;
+  cursor: pointer;
+  padding: 5px 25px;
+  display: flex;
+  align-items: center;
+}
+.controller form .undo svg {
+  margin-right: 10px;
+}
+.controller form .undo:hover {
+  background-color: var(--orange-light);
+  color: var(--light);
+}
+
+.input-group label {
+  text-transform: uppercase;
+  margin-right: 10px;
+}
+.input-group input {
+  outline: 0;
+  border-radius: 5px;
+  border: 0;
+  height: 30px;
+  padding: 10px 15px;
+  text-align: right;
 }
 #content {
   padding-top: 50px;
