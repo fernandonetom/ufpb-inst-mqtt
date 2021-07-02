@@ -178,20 +178,6 @@ export default function Home() {
 
   function handleResetData() {
     setData([]);
-
-    setChartData({
-      labels: [],
-      datasets: [
-        {
-          label: 'Temperatura',
-          backgroundColor: '#4ECCA3',
-          borderColor: '#4ECCA3',
-          data: [],
-          fill: false,
-          tension: 0.5,
-        },
-      ],
-    });
   }
 
   function handleSaveData(e) {

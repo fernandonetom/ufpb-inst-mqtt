@@ -89,7 +89,7 @@ header {
 .infoContainer #logs {
   overflow-x: hidden;
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 280px;
   padding-right: 10px;
   margin-bottom: 20px;
 }
