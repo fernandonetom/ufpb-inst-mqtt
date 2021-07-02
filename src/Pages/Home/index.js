@@ -43,12 +43,12 @@ export default function Home() {
       const date = new Date();
       const hours = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 
-      const newData = { ...chartData };
+      const newData = chartData;
 
-      const copyData = chartData.labels.slice((limit - 1) * -1);
+      const copyData = newData.labels.slice((limit - 1) * -1);
       copyData.push(hours);
 
-      newData.labels = [...copyData];
+      newData.labels = copyData;
 
       newData.datasets.forEach((dataset) => {
         const copy = dataset.data.slice((limit - 1) * -1);
@@ -63,7 +63,7 @@ export default function Home() {
         dataset.data = [...copy];
       });
 
-      setChartData(newData);
+      setChartData({ ...newData });
     }
   }
 
@@ -86,7 +86,6 @@ export default function Home() {
 
     mqttClient.on('message', (topic, payload) => {
       const message = payload.toString();
-
       switch (topic) {
         case 'mqtt/ufpb-inst/temp':
           try {
@@ -110,6 +109,12 @@ export default function Home() {
     mqttClient.on('disconnect', () => setStatus('desconectado'));
     mqttClient.on('reconnect', () => setStatus('reconectando'));
     mqttClient.on('error', () => setStatus('erro'));
+
+    return () => {
+      mqttClient.unsubscribe(tempTopic);
+      mqttClient.unsubscribe(controlTopic);
+      return null;
+    };
   }, []);
 
   function getData() {
@@ -173,6 +178,7 @@ export default function Home() {
 
   function handleResetData() {
     setData([]);
+
     setChartData({
       labels: [],
       datasets: [
