@@ -1,5 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState, useEffect, useCallback, useRef,
+} from 'react';
 import { Line } from 'react-chartjs-2';
 import Mqtt from 'mqtt';
 import {
@@ -14,6 +16,8 @@ const tempTopic = 'mqtt/ufpb-inst/temp';
 const controlTopic = 'mqtt/ufpb-inst/control';
 const controllerTopic = 'mqtt/ufpb-inst/controller';
 
+const defaultRefValue = '50';
+
 export default function Home() {
   const [status, setStatus] = useState('desconectado');
   const [isRunning, setIsRunning] = useState(false);
@@ -25,17 +29,26 @@ export default function Home() {
     labels: [],
     datasets: [
       {
-        label: 'Temperatura',
+        label: 'Temperatura Medida',
         backgroundColor: '#4ECCA3',
         borderColor: '#4ECCA3',
         data: [],
         fill: false,
         tension: 0.5,
       },
+      {
+        label: 'Referência',
+        backgroundColor: '#d65a31',
+        borderColor: '#d65a31',
+        data: [],
+        fill: false,
+        tension: 0.5,
+      },
     ],
   });
+  const tempRef = useRef(defaultRefValue);
 
-  function updateChart(value) {
+  const updateChart = useCallback((value) => {
     const limit = 10;
     if (chartData.datasets.length > 0) {
       const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
@@ -50,22 +63,27 @@ export default function Home() {
 
       newData.labels = copyData;
 
-      newData.datasets.forEach((dataset) => {
+      newData.datasets.forEach((dataset, index) => {
         const copy = dataset.data.slice((limit - 1) * -1);
-        copy.push(number);
 
-        setData((prevData) => {
-          const aux = [...prevData];
-          aux.unshift({ hours, number });
-          return aux;
-        });
+        if (index === 0) {
+          copy.push(number);
+
+          setData((prevData) => {
+            const aux = [...prevData];
+            aux.unshift({ hours, number });
+            return aux;
+          });
+        } else {
+          copy.push(tempRef.current);
+        }
         // eslint-disable-next-line no-param-reassign
         dataset.data = [...copy];
       });
 
       setChartData({ ...newData });
     }
-  }
+  }, [chartData]);
 
   useEffect(() => {
     mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
@@ -122,11 +140,12 @@ export default function Home() {
     if (localData) {
       try {
         const retrieveData = JSON.parse(localData);
+        tempRef.current = retrieveData?.ref || defaultRefValue;
         setController({
           kp: retrieveData?.kp || '',
           ti: retrieveData?.ti || '',
           td: retrieveData?.td || '',
-          ref: retrieveData?.ref || '',
+          ref: retrieveData?.ref || defaultRefValue,
         });
       } catch (error) {
         addNotify({ title: 'Erro ao localizar dados na memória', message: error.message, type: 'error' });
@@ -204,6 +223,8 @@ export default function Home() {
       const dataToSend = JSON.stringify({
         kp, td, ti, ref,
       });
+
+      tempRef.current = ref;
 
       mqttClient.publish(controllerTopic, dataToSend);
 
@@ -332,7 +353,7 @@ export default function Home() {
               <button
                 type="button"
                 id="start"
-                onClick={status === 'conectado' && handleStart}
+                onClick={status === 'conectado' ? handleStart : undefined}
               >
                 {isRunning ? 'parar' : 'iniciar'}
               </button>
@@ -342,7 +363,9 @@ export default function Home() {
 
         </div>
         <div className="controller">
-          <h3>Dados do controlador</h3>
+          <h3>
+            Dados do controlador
+          </h3>
           <form onSubmit={handleSaveData}>
             <div className="input-group">
               <label htmlFor="kp">Kp</label>
