@@ -204,6 +204,14 @@ header {
   display: flex;
   align-items: center;
 }
+.controller form .save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.controller form .save:disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .controller form .save svg {
   margin-right: 10px;
 }
@@ -226,6 +234,14 @@ header {
   padding: 5px 25px;
   display: flex;
   align-items: center;
+}
+.controller form .undo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.controller form .undo:disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .controller form .undo svg {
   margin-right: 10px;

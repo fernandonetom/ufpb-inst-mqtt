@@ -16,8 +16,10 @@
         console.log('enviou', number);
       }
       client.subscribe('mqtt/ufpb-inst/control');
+      client.subscribe('mqtt/ufpb-inst/controller');
       let intervalo;
       client.on('message', (topic, payload) => {
+        console.log(`topico: ${topic}`, `mensagem: ${payload.toString()}`);
         if (topic.toString() === 'mqtt/ufpb-inst/control') {
           if (payload.toString() === 'start') {
             intervalo = setInterval(send, 2000);

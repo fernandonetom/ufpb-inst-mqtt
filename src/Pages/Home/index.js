@@ -2,7 +2,7 @@
 import React, {
   useState, useEffect, useCallback, useRef,
 } from 'react';
-import { Line } from 'react-chartjs-2';
+
 import Mqtt from 'mqtt';
 import {
   FaTrashAlt, FaCheck, FaTimes, FaUnlink, FaRegPaperPlane, FaSave, FaUndo,
@@ -10,6 +10,7 @@ import {
 import ReactTooltip from 'react-tooltip';
 
 import addNotify from '../../Components/Notify';
+import Chart from '../../Components/Chart';
 
 let mqttClient;
 const tempTopic = 'mqtt/ufpb-inst/temp';
@@ -17,6 +18,27 @@ const controlTopic = 'mqtt/ufpb-inst/control';
 const controllerTopic = 'mqtt/ufpb-inst/controller';
 
 const defaultRefValue = '50';
+const chartData = {
+  labels: [],
+  datasets: [
+    {
+      label: 'Temperatura Medida',
+      backgroundColor: '#4ECCA3',
+      borderColor: '#4ECCA3',
+      data: [],
+      fill: false,
+      tension: 0.5,
+    },
+    {
+      label: 'Referência',
+      backgroundColor: '#d65a31',
+      borderColor: '#d65a31',
+      data: [],
+      fill: false,
+      tension: 0.5,
+    },
+  ],
+};
 
 export default function Home() {
   const [status, setStatus] = useState('desconectado');
@@ -25,38 +47,18 @@ export default function Home() {
     kp: '', ti: '', td: '', ref: '',
   });
   const [data, setData] = useState([]);
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: [
-      {
-        label: 'Temperatura Medida',
-        backgroundColor: '#4ECCA3',
-        borderColor: '#4ECCA3',
-        data: [],
-        fill: false,
-        tension: 0.5,
-      },
-      {
-        label: 'Referência',
-        backgroundColor: '#d65a31',
-        borderColor: '#d65a31',
-        data: [],
-        fill: false,
-        tension: 0.5,
-      },
-    ],
-  });
   const tempRef = useRef(defaultRefValue);
+  const chartRef = useRef();
 
   const updateChart = useCallback((value) => {
     const limit = 10;
-    if (chartData.datasets.length > 0) {
+    if (chartRef.current && chartRef.current.config.data.datasets.length > 0) {
       const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
 
       const date = new Date();
       const hours = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
 
-      const newData = chartData;
+      const newData = chartRef.current.config.data;
 
       const copyData = newData.labels.slice((limit - 1) * -1);
       copyData.push(hours);
@@ -81,7 +83,8 @@ export default function Home() {
         dataset.data = [...copy];
       });
 
-      setChartData({ ...newData });
+      chartRef.current.config.data = { ...newData };
+      chartRef.current.update();
     }
   }, [chartData]);
 
@@ -197,6 +200,29 @@ export default function Home() {
 
   function handleResetData() {
     setData([]);
+    chartRef.current.config.data = {
+      labels: [],
+      datasets: [
+        {
+          label: 'Temperatura Medida',
+          backgroundColor: '#4ECCA3',
+          borderColor: '#4ECCA3',
+          data: [],
+          fill: false,
+          tension: 0.5,
+        },
+        {
+          label: 'Referência',
+          backgroundColor: '#d65a31',
+          borderColor: '#d65a31',
+          data: [],
+          fill: false,
+          tension: 0.5,
+        },
+      ],
+    };
+    console.log(chartRef.current.config.data);
+    chartRef.current.update();
   }
 
   function handleSaveData(e) {
@@ -255,47 +281,7 @@ export default function Home() {
       <section className="container" id="canvasContainer">
         <div className="canvasContainer">
           <h3>Gráfico</h3>
-          <Line
-            data={chartData}
-            options={{
-              animation: false,
-              responsive: true,
-              plugins: {
-                legend: {
-                  display: false,
-                },
-              },
-              scales: {
-                y: {
-                  title: {
-                    display: true,
-                    text: 'Temperatura',
-                    color: '#EEEEEE',
-                  },
-                  suggestedMin: 0,
-                  suggestedMax: 50,
-                  ticks: {
-                    color: '#EEEEEE',
-                  },
-                },
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Tempo',
-                    color: '#EEEEEE',
-                  },
-                  ticks: {
-                    color: '#EEEEEE',
-                  },
-                },
-              },
-              interaction: {
-                mode: 'nearest',
-                intersect: false,
-              },
-              color: '#EEEEEE',
-            }}
-          />
+          <Chart ref={chartRef} chartData={chartData} />
         </div>
         <div className="infoContainer">
           <div className="status">
@@ -403,11 +389,11 @@ export default function Home() {
                 onChange={handleInputChange}
               />
             </div>
-            <button type="submit" className="save">
+            <button type="submit" className="save" disabled={isRunning}>
               <FaSave />
               Aplicar
             </button>
-            <button type="button" className="undo" onClick={handleClean}>
+            <button type="button" className="undo" onClick={handleClean} disabled={isRunning}>
               <FaUndo />
               {' '}
               Limpar
