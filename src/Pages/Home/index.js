@@ -221,7 +221,6 @@ export default function Home() {
         },
       ],
     };
-    console.log(chartRef.current.config.data);
     chartRef.current.update();
   }
 
