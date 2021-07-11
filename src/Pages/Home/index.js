@@ -1,8 +1,13 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
+<<<<<<< HEAD
 import React, {
   useState, useEffect, useCallback, useRef,
 } from 'react';
 
+=======
+import React, { useState, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+>>>>>>> parent of 4bce19b... feat: add ref data
 import Mqtt from 'mqtt';
 import {
   FaTrashAlt, FaCheck, FaTimes, FaUnlink, FaRegPaperPlane, FaSave, FaUndo,
@@ -17,6 +22,7 @@ const tempTopic = 'mqtt/ufpb-inst/temp';
 const controlTopic = 'mqtt/ufpb-inst/control';
 const controllerTopic = 'mqtt/ufpb-inst/controller';
 
+<<<<<<< HEAD
 const defaultRefValue = '50';
 const chartData = {
   labels: [],
@@ -40,6 +46,8 @@ const chartData = {
   ],
 };
 
+=======
+>>>>>>> parent of 4bce19b... feat: add ref data
 export default function Home() {
   const [status, setStatus] = useState('desconectado');
   const [isRunning, setIsRunning] = useState(false);
@@ -47,10 +55,26 @@ export default function Home() {
     kp: '', ti: '', td: '', ref: '',
   });
   const [data, setData] = useState([]);
+<<<<<<< HEAD
   const tempRef = useRef(defaultRefValue);
   const chartRef = useRef();
+=======
+  const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        label: 'Temperatura',
+        backgroundColor: '#4ECCA3',
+        borderColor: '#4ECCA3',
+        data: [],
+        fill: false,
+        tension: 0.5,
+      },
+    ],
+  });
+>>>>>>> parent of 4bce19b... feat: add ref data
 
-  const updateChart = useCallback((value) => {
+  function updateChart(value) {
     const limit = 10;
     console.log(chartRef.current);
     if (chartRef.current && chartRef.current.config.data.datasets.length > 0) {
@@ -66,20 +90,15 @@ export default function Home() {
 
       newData.labels = copyData;
 
-      newData.datasets.forEach((dataset, index) => {
+      newData.datasets.forEach((dataset) => {
         const copy = dataset.data.slice((limit - 1) * -1);
+        copy.push(number);
 
-        if (index === 0) {
-          copy.push(number);
-
-          setData((prevData) => {
-            const aux = [...prevData];
-            aux.unshift({ hours, number });
-            return aux;
-          });
-        } else {
-          copy.push(tempRef.current);
-        }
+        setData((prevData) => {
+          const aux = [...prevData];
+          aux.unshift({ hours, number });
+          return aux;
+        });
         // eslint-disable-next-line no-param-reassign
         dataset.data = [...copy];
       });
@@ -87,7 +106,11 @@ export default function Home() {
       chartRef.current.config.data = { ...newData };
       chartRef.current.update();
     }
+<<<<<<< HEAD
   }, [chartData, chartRef.current]);
+=======
+  }
+>>>>>>> parent of 4bce19b... feat: add ref data
 
   useEffect(() => {
     mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
@@ -144,12 +167,11 @@ export default function Home() {
     if (localData) {
       try {
         const retrieveData = JSON.parse(localData);
-        tempRef.current = retrieveData?.ref || defaultRefValue;
         setController({
           kp: retrieveData?.kp || '',
           ti: retrieveData?.ti || '',
           td: retrieveData?.td || '',
-          ref: retrieveData?.ref || defaultRefValue,
+          ref: retrieveData?.ref || '',
         });
       } catch (error) {
         addNotify({ title: 'Erro ao localizar dados na memória', message: error.message, type: 'error' });
@@ -250,8 +272,6 @@ export default function Home() {
         kp, td, ti, ref,
       });
 
-      tempRef.current = ref;
-
       mqttClient.publish(controllerTopic, dataToSend);
 
       localStorage.setItem('@ufpb-inst/controller', dataToSend);
@@ -339,7 +359,7 @@ export default function Home() {
               <button
                 type="button"
                 id="start"
-                onClick={status === 'conectado' ? handleStart : undefined}
+                onClick={status === 'conectado' && handleStart}
               >
                 {isRunning ? 'parar' : 'iniciar'}
               </button>
@@ -349,9 +369,7 @@ export default function Home() {
 
         </div>
         <div className="controller">
-          <h3>
-            Dados do controlador
-          </h3>
+          <h3>Dados do controlador</h3>
           <form onSubmit={handleSaveData}>
             <div className="input-group">
               <label htmlFor="kp">Kp</label>
