@@ -52,6 +52,7 @@ export default function Home() {
 
   const updateChart = useCallback((value) => {
     const limit = 10;
+    console.log(chartRef.current);
     if (chartRef.current && chartRef.current.config.data.datasets.length > 0) {
       const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
 
@@ -86,7 +87,7 @@ export default function Home() {
       chartRef.current.config.data = { ...newData };
       chartRef.current.update();
     }
-  }, [chartData]);
+  }, [chartData, chartRef.current]);
 
   useEffect(() => {
     mqttClient = Mqtt.connect('wss://broker.emqx.io:8084/mqtt');
