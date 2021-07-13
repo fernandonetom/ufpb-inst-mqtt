@@ -49,7 +49,7 @@ export default function Home() {
   const tempRef = useRef(defaultRefValue);
 
   const updateChart = useCallback((value) => {
-    const limit = 10;
+    const limit = 150;
     if (chartData.datasets.length > 0) {
       const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
 
