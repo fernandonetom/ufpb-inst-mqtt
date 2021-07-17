@@ -15,14 +15,14 @@
         client.publish('mqtt/ufpb-inst/temp', number.toString());
         console.log('enviou', number);
       }
-      client.subscribe('mqtt/ufpb-inst/control');
+      client.subscribe('mqtt/ufpb-inst/start');
       let intervalo;
       client.on('message', (topic, payload) => {
-        if (topic.toString() === 'mqtt/ufpb-inst/control') {
-          if (payload.toString() === 'start') {
+        if (topic.toString() === 'mqtt/ufpb-inst/start') {
+          if (payload.toString() === 'sta') {
             intervalo = setInterval(send, 2000);
           } else {
-            clearInterval(intervalo);
+            //clearInterval(intervalo);
           }
         }
       });

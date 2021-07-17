@@ -13,7 +13,7 @@ import addNotify from '../../Components/Notify';
 
 let mqttClient;
 const tempTopic = 'mqtt/ufpb-inst/temp';
-const controlTopic = 'mqtt/ufpb-inst/control';
+const controlTopic = 'mqtt/ufpb-inst/start';
 const controllerTopic = 'mqtt/ufpb-inst/controller';
 
 const defaultRefValue = '50';
@@ -42,14 +42,16 @@ export default function Home() {
         borderColor: '#d65a31',
         data: [],
         fill: false,
-        tension: 0.5,
+        tension: 0,
       },
     ],
   });
   const tempRef = useRef(defaultRefValue);
+  const runningRef = useRef(false);
+  const typeRef = useRef('degrau');
 
   const updateChart = useCallback((value) => {
-    const limit = 150;
+    const limit = 200;
     if (chartData.datasets.length > 0) {
       const number = ((parseFloat(value) * 100) / 4095).toFixed(2);
 
@@ -74,8 +76,10 @@ export default function Home() {
             aux.unshift({ hours, number });
             return aux;
           });
-        } else {
+        } else if (runningRef.current) {
           copy.push(tempRef.current);
+        } else {
+          copy.push(0);
         }
         // eslint-disable-next-line no-param-reassign
         dataset.data = [...copy];
@@ -157,7 +161,8 @@ export default function Home() {
   }, []);
 
   function handleStart() {
-    mqttClient.publish(controlTopic, isRunning ? 'stop' : 'start');
+    mqttClient.publish(controlTopic, isRunning ? 'stp' : typeRef.current);
+    runningRef.current = !runningRef.current;
     setIsRunning(!isRunning);
   }
 
@@ -250,6 +255,10 @@ export default function Home() {
     }
   }
 
+  function handleChangeType(e) {
+    typeRef.current = e.target.value;
+  }
+
   return (
     <>
       <section className="container" id="canvasContainer">
@@ -258,6 +267,11 @@ export default function Home() {
           <Line
             data={chartData}
             options={{
+              elements: {
+                point: {
+                  radius: 0,
+                },
+              },
               animation: false,
               responsive: true,
               plugins: {
@@ -349,15 +363,23 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="acoes">
-              <button
-                type="button"
-                id="start"
-                onClick={status === 'conectado' ? handleStart : undefined}
-              >
-                {isRunning ? 'parar' : 'iniciar'}
-              </button>
-              <button type="button" id="save" onClick={handleExport}>salvar</button>
+            <div className="form-control">
+              <div className="inline-radio">
+                <input type="radio" className="radio" name="x" value="degrau" id="y" onChange={handleChangeType} defaultChecked />
+                <label htmlFor="y">Degrau</label>
+                <input type="radio" className="radio" name="x" value="controlador" id="z" onChange={handleChangeType} />
+                <label htmlFor="z">Controlador</label>
+              </div>
+              <div className="acoes">
+                <button
+                  type="button"
+                  id="start"
+                  onClick={status === 'conectado' ? handleStart : undefined}
+                >
+                  {isRunning ? 'parar' : 'iniciar'}
+                </button>
+                <button type="button" id="save" onClick={handleExport}>salvar</button>
+              </div>
             </div>
           </div>
 

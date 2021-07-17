@@ -290,6 +290,13 @@ header {
 .flex button {
   margin-left: 15px;
 }
+.inline-radio {
+  margin-bottom: 10px;
+}
+.inline-radio label {
+  margin-left: 10px;
+  margin-right: 30px;
+}
 
 #logs {
   text-align: center;
