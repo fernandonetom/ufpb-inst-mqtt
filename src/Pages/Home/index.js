@@ -73,13 +73,11 @@ export default function Home() {
 
           setData((prevData) => {
             const aux = [...prevData];
-            aux.unshift({ hours, number });
+            aux.unshift({ hours, number, ref: runningRef.current * tempRef.current });
             return aux;
           });
-        } else if (runningRef.current) {
-          copy.push(tempRef.current);
         } else {
-          copy.push(0);
+          copy.push(runningRef.current * tempRef.current);
         }
         // eslint-disable-next-line no-param-reassign
         dataset.data = [...copy];
@@ -169,7 +167,7 @@ export default function Home() {
   function handleExport() {
     try {
       const csvContent = `data:text/csv;charset=utf-8,${
-        data.reverse().map((e) => `${e.hours};${e.number}`).join('\n')}`;
+        data.reverse().map((e) => `${e.hours};${e.number};${e.ref}`).join('\n')}`;
 
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
@@ -276,7 +274,8 @@ export default function Home() {
               responsive: true,
               plugins: {
                 legend: {
-                  display: false,
+                  display: true,
+                  onClick: () => {},
                 },
               },
               scales: {
@@ -304,8 +303,11 @@ export default function Home() {
                 },
               },
               interaction: {
-                mode: 'nearest',
+                mode: 'index',
                 intersect: false,
+              },
+              tooltips: {
+                mode: 'index',
               },
               color: '#EEEEEE',
             }}
