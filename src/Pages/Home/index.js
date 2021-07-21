@@ -13,6 +13,7 @@ import addNotify from '../../Components/Notify';
 
 let mqttClient;
 const tempTopic = 'mqtt/ufpb-inst/temp';
+const refTopic = 'mqtt/ufpb-inst/ref';
 const controlTopic = 'mqtt/ufpb-inst/start';
 const controllerTopic = 'mqtt/ufpb-inst/controller';
 
@@ -166,8 +167,13 @@ export default function Home() {
 
   function handleExport() {
     try {
-      const csvContent = `data:text/csv;charset=utf-8,${
-        data.reverse().map((e) => `${e.hours};${e.number};${e.ref}`).join('\n')}`;
+      const dataArray = data
+        .reverse()
+        .map((e) => `${e.hours};${e.number};${e.ref}`);
+
+      dataArray.unshift('Tempo;Temperatura;Referencia');
+
+      const csvContent = `data:text/csv;charset=utf-8,${dataArray.join('\n')}`;
 
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
@@ -224,7 +230,7 @@ export default function Home() {
 
     try {
       const dataToSend = JSON.stringify({
-        kp, td, ti, ref,
+        kp, td, ti,
       });
 
       tempRef.current = ref;
@@ -236,6 +242,51 @@ export default function Home() {
       return addNotify({
         title: 'Dados aplicados',
         message: `Kp: ${kp} / Ti: ${ti} / td: ${td} / Ref: ${ref}`,
+        type: 'success',
+        container: 'bottom-center',
+      });
+    } catch (error) {
+      return addNotify({
+        title: 'Erro ao aplicar os dados',
+        message: error.message,
+        type: 'warning',
+        container: 'bottom-center',
+        dismiss: {
+          duration: 5000,
+          onScreen: true,
+        },
+      });
+    }
+  }
+
+  function handleSaveLocal() {
+    const {
+      kp, td, ti,
+    } = controller;
+
+    const ref = tempRef.current;
+
+    const dataToSend = JSON.stringify({
+      kp, td, ti, ref,
+    });
+
+    localStorage.setItem('@ufpb-inst/controller', dataToSend);
+  }
+
+  function handleSaveRef(e) {
+    e.preventDefault();
+
+    const { ref } = controller;
+
+    tempRef.current = ref;
+
+    try {
+      mqttClient.publish(refTopic, ref);
+
+      handleSaveLocal();
+      return addNotify({
+        title: 'Dados aplicados',
+        message: `Ref: ${ref}`,
         type: 'success',
         container: 'bottom-center',
       });
@@ -390,6 +441,21 @@ export default function Home() {
           <h3>
             Dados do controlador
           </h3>
+          <form onSubmit={handleSaveRef} className="refForm">
+            <div className="input-group">
+              <label htmlFor="ref">ref</label>
+              <input
+                type="text"
+                id="ref"
+                value={controller.ref}
+                onChange={handleInputChange}
+              />
+            </div>
+            <button type="submit" className="save">
+              <FaSave />
+              Aplicar referência
+            </button>
+          </form>
           <form onSubmit={handleSaveData}>
             <div className="input-group">
               <label htmlFor="kp">Kp</label>
@@ -418,18 +484,9 @@ export default function Home() {
                 onChange={handleInputChange}
               />
             </div>
-            <div className="input-group">
-              <label htmlFor="ref">ref</label>
-              <input
-                type="text"
-                id="ref"
-                value={controller.ref}
-                onChange={handleInputChange}
-              />
-            </div>
             <button type="submit" className="save" disabled={isRunning}>
               <FaSave />
-              Aplicar
+              Aplicar Controlador
             </button>
             <button type="button" className="undo" onClick={handleClean} disabled={isRunning}>
               <FaUndo />

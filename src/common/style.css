@@ -33,7 +33,7 @@ header {
   width: 100%;
   max-width: 1480px;
   grid-template-columns: 2fr 1fr;
-  grid-auto-rows: 1fr 0.3fr;
+  grid-auto-rows: 1fr 0.45fr;
   grid-template-areas:
     'a b'
     'c c';
@@ -263,6 +263,14 @@ header {
   padding: 10px 15px;
   text-align: right;
 }
+.controller form.refForm {
+  display: flex;
+  justify-content: center;
+}
+.controller form.refForm input {
+  margin-right: 40px;
+}
+
 #content {
   padding-top: 50px;
   display: flex;
