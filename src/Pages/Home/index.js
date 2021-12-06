@@ -13,7 +13,7 @@ import addNotify from '../../Components/Notify';
 
 let mqttClient;
 const tempTopic = 'mqtt/ufpb-inst/temp';
-const refTopic = 'mqtt/ufpb-inst/ref';
+// const refTopic = 'mqtt/ufpb-inst/ref';
 const controlTopic = 'mqtt/ufpb-inst/start';
 const controllerTopic = 'mqtt/ufpb-inst/controller';
 
@@ -107,6 +107,7 @@ export default function Home() {
 
     mqttClient.on('message', (topic, payload) => {
       const message = payload.toString();
+      console.log(`MSG Recebida ${topic}: ${payload.toString()}`);
       switch (topic) {
         case 'mqtt/ufpb-inst/temp':
           try {
@@ -230,7 +231,7 @@ export default function Home() {
 
     try {
       const dataToSend = JSON.stringify({
-        kp, td, ti,
+        kp, td, ti, ref,
       });
 
       tempRef.current = ref;
@@ -238,6 +239,8 @@ export default function Home() {
       mqttClient.publish(controllerTopic, dataToSend);
 
       localStorage.setItem('@ufpb-inst/controller', dataToSend);
+
+      console.log(`MSG Enviada ${controllerTopic}: ${dataToSend}`);
 
       return addNotify({
         title: 'Dados aplicados',
@@ -259,50 +262,52 @@ export default function Home() {
     }
   }
 
-  function handleSaveLocal() {
-    const {
-      kp, td, ti,
-    } = controller;
+  // function handleSaveLocal() {
+  //   const {
+  //     kp, td, ti,
+  //   } = controller;
 
-    const ref = tempRef.current;
+  //   const ref = tempRef.current;
 
-    const dataToSend = JSON.stringify({
-      kp, td, ti, ref,
-    });
+  //   const dataToSend = JSON.stringify({
+  //     kp, td, ti, ref,
+  //   });
 
-    localStorage.setItem('@ufpb-inst/controller', dataToSend);
-  }
+  //   localStorage.setItem('@ufpb-inst/controller', dataToSend);
+  // }
 
-  function handleSaveRef(e) {
-    e.preventDefault();
+  // function handleSaveRef(e) {
+  //   e.preventDefault();
 
-    const { ref } = controller;
+  //   const { ref } = controller;
 
-    tempRef.current = ref;
+  //   tempRef.current = ref;
 
-    try {
-      mqttClient.publish(refTopic, ref);
+  //   try {
+  //     mqttClient.publish(refTopic, ref);
 
-      handleSaveLocal();
-      return addNotify({
-        title: 'Dados aplicados',
-        message: `Ref: ${ref}`,
-        type: 'success',
-        container: 'bottom-center',
-      });
-    } catch (error) {
-      return addNotify({
-        title: 'Erro ao aplicar os dados',
-        message: error.message,
-        type: 'warning',
-        container: 'bottom-center',
-        dismiss: {
-          duration: 5000,
-          onScreen: true,
-        },
-      });
-    }
-  }
+  //     console.log(`MSG Enviada ${refTopic}: ${ref}`);
+
+  //     handleSaveLocal();
+  //     return addNotify({
+  //       title: 'Dados aplicados',
+  //       message: `Ref: ${ref}`,
+  //       type: 'success',
+  //       container: 'bottom-center',
+  //     });
+  //   } catch (error) {
+  //     return addNotify({
+  //       title: 'Erro ao aplicar os dados',
+  //       message: error.message,
+  //       type: 'warning',
+  //       container: 'bottom-center',
+  //       dismiss: {
+  //         duration: 5000,
+  //         onScreen: true,
+  //       },
+  //     });
+  //   }
+  // }
 
   function handleChangeType(e) {
     typeRef.current = e.target.value;
@@ -326,7 +331,7 @@ export default function Home() {
               plugins: {
                 legend: {
                   display: true,
-                  onClick: () => {},
+                  onClick: () => { },
                 },
               },
               scales: {
@@ -441,7 +446,7 @@ export default function Home() {
           <h3>
             Dados do controlador
           </h3>
-          <form onSubmit={handleSaveRef} className="refForm">
+          <form onSubmit={handleSaveData} className="refForm">
             <div className="input-group">
               <label htmlFor="ref">ref</label>
               <input
